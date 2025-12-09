@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export default function ModuleViewer() {
-  const [params] = useRoute("/modules/:id");
+  const [match, params] = useRoute("/modules/:id");
   const { modules, user } = useStore(); // In real app, we'd update progress here
   const { toast } = useToast();
   

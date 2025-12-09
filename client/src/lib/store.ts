@@ -57,24 +57,56 @@ interface AppState {
   deleteGiftCode: (id: string) => void;
 }
 
-const MOCK_PAGES: Page[] = [
+const MOCK_PAGES_LINUX: Page[] = [
   {
     id: "p1",
-    title: "Introduction",
-    content: "<p>Welcome to the module. This is the first step in your journey.</p>",
+    title: "Introduction to Linux",
+    content: "<p>Linux is a family of open-source Unix-like operating systems based on the Linux kernel.</p>",
     type: "text",
     questions: [
-      { id: "q1", text: "What is the flag?", answer: "CTF{welcome}" },
-      { id: "q2", text: "What port is SSH?", answer: "22" }
+      { id: "q1", text: "Who created Linux?", answer: "Linus Torvalds" }
     ]
   },
   {
     id: "p2",
-    title: "Basic Enumeration",
-    content: "<p>Enumeration is key. Use nmap to scan the target.</p><pre>nmap -sC -sV 10.10.10.10</pre>",
+    title: "File System Hierarchy",
+    content: "<p>Everything in Linux is a file. The root directory is represented by /.</p>",
+    type: "text",
+    questions: [
+      { id: "q2", text: "Which directory contains configuration files?", answer: "/etc" }
+    ]
+  }
+];
+
+const MOCK_PAGES_WEB: Page[] = [
+  {
+    id: "p3",
+    title: "Understanding HTTP",
+    content: "<p>HTTP is the foundation of data communication for the World Wide Web.</p>",
+    type: "text",
+    questions: [
+      { id: "q3", text: "What port does HTTP use by default?", answer: "80" }
+    ]
+  },
+  {
+    id: "p4",
+    title: "SQL Injection",
+    content: "<p>SQL injection is a code injection technique that might destroy your database.</p><pre>SELECT * FROM users WHERE name = '' OR '1'='1';</pre>",
     type: "code",
     questions: [
-      { id: "q3", text: "How many ports are open?", answer: "3" }
+      { id: "q4", text: "What character is often used to start an injection?", answer: "'" }
+    ]
+  }
+];
+
+const MOCK_PAGES_ADVANCED: Page[] = [
+  {
+    id: "p5",
+    title: "Buffer Overflow",
+    content: "<p>A buffer overflow occurs when a program writes more data to a buffer than it can hold.</p>",
+    type: "text",
+    questions: [
+      { id: "q5", text: "What memory segment stores local variables?", answer: "Stack" }
     ]
   }
 ];
@@ -88,7 +120,7 @@ const INITIAL_MODULES: Module[] = [
     cubeCost: 0,
     isSpecial: false,
     progress: 30,
-    pages: MOCK_PAGES,
+    pages: MOCK_PAGES_LINUX,
     unlocked: true,
   },
   {
@@ -99,7 +131,7 @@ const INITIAL_MODULES: Module[] = [
     cubeCost: 100,
     isSpecial: false,
     progress: 0,
-    pages: MOCK_PAGES,
+    pages: MOCK_PAGES_WEB,
     unlocked: false,
   },
   {
@@ -110,7 +142,7 @@ const INITIAL_MODULES: Module[] = [
     cubeCost: 500,
     isSpecial: true, // Special module
     progress: 0,
-    pages: MOCK_PAGES,
+    pages: MOCK_PAGES_ADVANCED,
     unlocked: false,
   },
 ];
