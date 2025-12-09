@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Trash, Save, ArrowLeft, FileText, Code, Video } from "lucide-react";
+import { Plus, Trash, Save, ArrowLeft, FileText, Code, Video, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminModuleEditor() {
@@ -148,14 +148,33 @@ export default function AdminModuleEditor() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Content</Label>
-                    <Textarea 
-                      className="font-mono h-32"
-                      value={page.content} 
-                      onChange={(e) => updatePage(index, { ...page, content: e.target.value })}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Content</Label>
+                      <Textarea 
+                        className="font-mono h-32"
+                        value={page.content} 
+                        onChange={(e) => updatePage(index, { ...page, content: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Image URL (Optional)</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="https://example.com/image.jpg"
+                          value={page.image || ""} 
+                          onChange={(e) => updatePage(index, { ...page, image: e.target.value })}
+                        />
+                        <Button variant="outline" size="icon" className="shrink-0">
+                           <ImageIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {page.image && (
+                        <div className="mt-2 relative w-full h-32 bg-black/20 rounded overflow-hidden border border-border">
+                           <img src={page.image} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
 
                   {/* Questions Section */}
                   <div className="space-y-4 bg-black/20 p-4 rounded border border-red-500/10">

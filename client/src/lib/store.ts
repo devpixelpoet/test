@@ -7,6 +7,7 @@ export interface Page {
   title: string;
   content: string; // HTML/Markdown
   type: "text" | "code" | "video";
+  image?: string;
   questions?: {
     id: string;
     text: string;

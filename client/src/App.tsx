@@ -20,6 +20,7 @@ import AdminModules from "@/pages/admin/modules";
 import AdminModuleEditor from "@/pages/admin/module-editor";
 import AdminCubes from "@/pages/admin/cubes";
 import AdminUsers from "@/pages/admin/users";
+import ModuleViewer from "@/pages/module-viewer";
 
 // Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -63,6 +64,10 @@ function Router() {
       
       <Route path="/modules">
         <ProtectedRoute component={ModulesPage} />
+      </Route>
+      
+      <Route path="/modules/:id">
+        <ProtectedRoute component={ModuleViewer} />
       </Route>
       
       <Route path="/specials">
