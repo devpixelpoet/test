@@ -1,0 +1,158 @@
+Prompt for bolt.new — Build a HackTheBox-style PHP platform (Vanilla PHP, MySQL, Ubuntu)
+
+Goal:
+Build a complete, production-like HackTheBox-style web platform using plain PHP (no framework, no Laravel), MySQL, and targeted for deployment on an Ubuntu server. Deliver full source code, DB schema and seed data, installation scripts, and README with deployment steps for Ubuntu 22.04+ (Apache or Nginx). Make UI/design hacker-friendly and professional.
+
+High-level requirements (features):
+
+Authentication
+
+Register, Login, Logout (session-based, secure cookies).
+
+Passwords hashed with password_hash() (bcrypt).
+
+Email field but no external mail required (optionally stubbed).
+
+Account roles: user, admin.
+
+Main user pages
+
+Dashboard: shows user progress across modules (percent completed per module), and quick links to started modules and special items.
+
+Modules: list of modules (two types: free and cube); modules have many ordered pages.
+
+Cube: page showing cards for cube packs (100, 200, 300, 400, 500). Clicking a card opens a modal/input where user redeems a gift code to receive that cube amount.
+
+Specials: special challenges or labs that may require cubes to unlock.
+
+Profile: view/edit profile, show cubes balance, recent activity, owned specials.
+
+Module reading UI: when a user enters a module they always start at the module’s first page (or the first unread page). Layout: main content on left, module page list (sidebar) on right. Sidebar shows all pages in module and current progress.
+
+Page content types: image, text, code (styled as terminal), embedded video, tasks (optional), question (optional), hints, and below each page a flag input to submit a flag. Tasks & question fields are optional per page.
+
+Progress tracking: when a user completes a page (submits correct flag OR marks as complete), update module progress; dashboard displays progress bars and percent for each module (visual, like HackTheBox).
+
+Admin panel (accessible only to admin role)
+
+Admin dashboard: quick stats (users, modules, active cubes).
+
+Manage modules: create/update/delete modules. Module fields: title, description, type (free or cube), cube_cost (if module is cube-locked), is_special boolean.
+
+Manage pages for modules: create/update/delete pages. Page content fields: title, order, text_html, code_snippet, image_url (upload support), video_url (YouTube/embed), has_tasks (optional JSON), question_text (optional), flag (correct flag string, stored hashed), hint_text, requires_flag boolean.
+
+Manage users: list users, edit (role, cubes balance), delete users, reset password.
+
+Admin can set an admin_cube value per module (how many cubes required to unlock). Admin can manually grant cubes to users.
+
+Admin can create/expire gift codes and set cube amount for each code.
+
+Cube/Gift code system
+
+Gift codes: one-input redemption flow. Admin creates codes with a code string and value (100/200/300/400/500 etc), optional expiry.
+
+When user redeems valid code, add cubes to user's balance and mark code used by that user (or mark as single-use global).
+
+Using cubes: modules marked as cube require user to spend cube_cost cubes to unlock access. Once unlocked, the module is available in Modules/Specials and counts toward progress.
+
+UX / UI design
+
+Hacker aesthetic: dark theme, monospaced fonts for code, terminal-style code blocks, neon/accent colors, modern responsive layout.
+
+Dashboard cards for modules with circular or horizontal progress bars and percentage numeric label.
+
+Module page design: left column content, right sidebar listing pages with clickable progress markers (complete/incomplete/locked).
+
+Flag input UI at bottom of each page with hint toggle and feedback messages (correct/incorrect, remaining attempts).
+
+Use client-side JS for smooth UI (no frameworks required; vanilla JS). Use Prism.js or highlight.js for code highlighting (include in deliverables).
+
+Make UI accessible and responsive (mobile/tablet/desktop).
+
+Data model (suggested MySQL schema)
+
+users (id, username, email, password_hash, role, cubes_balance, created_at, updated_at)
+
+modules (id, title, slug, description, type ENUM('free','cube'), cube_cost INT DEFAULT 0, is_special BOOL, created_at, updated_at)
+
+pages (id, module_id, title, order INT, text_html TEXT, code TEXT, image_path VARCHAR, video_url VARCHAR, flag_hash VARCHAR, hint TEXT, has_tasks BOOL, tasks JSON NULL, requires_flag BOOL, created_at, updated_at)
+
+user_progress (id, user_id, module_id, page_id, status ENUM('locked','unlocked','completed'), completed_at NULL)
+
+gift_codes (id, code VARCHAR UNIQUE, value INT, single_use BOOL, created_by_admin_id, used_by_user_id NULL, used_at NULL, expires_at NULL, active BOOL)
+
+admin_actions (id, admin_id, action_type, details JSON, created_at)
+
+module_unlocks (id, user_id, module_id, unlocked_at)
+
+flags_attempts (id, user_id, page_id, attempt_text, success BOOL, attempt_at, ip_address)
+
+Add indexes and foreign keys as appropriate.
+
+Security & robustness (requirements)
+
+Use prepared statements / parameterized queries (PDO recommended).
+
+Protect sessions: session_regenerate_id() after login; set cookie flags HttpOnly, Secure (if HTTPS).
+
+CSRF protections on all modifying forms (implement CSRF token).
+
+Rate-limiting / brute-force mitigation on login and flag submissions (e.g., block after X failed attempts).
+
+Validate and sanitize all user input; escape output where needed.
+
+File upload restrictions for images: only allow specific extensions and check MIME type; store outside web root or in safe directory with randomized names.
+
+Hash correct flags in DB (e.g., password_hash($flag)) and check with password_verify() to avoid storing plain flags.
+
+Admin-only pages must enforce role checks server-side.
+
+Log admin actions (create module, delete user, issue codes).
+
+UX interactions & flows to implement
+
+Starting a module: when a user clicks a module in Modules, automatically unlock the first page (if free or already unlocked). If cube-locked, prompt spend cubes or show purchase modal.
+
+Completing a page: when user submits correct flag or manually marks complete, mark page completed, update user_progress and module percent: percent = completed_pages / total_pages * 100.
+
+Dashboard progress bar: show small progress bar for each started module (CSS progress with percent).
+
+Sidebar page list: display icons for locked/unlocked/completed; clicking a completed page opens it for review but still marked complete.
+
+Deliverables (explicit)
+
+Full source code of the site (PHP, HTML, CSS, JS). No external frameworks for backend. Frontend may use small open-source libs (Prism.js, Chart.js optional).
+
+SQL migration file schema.sql to create all tables and indexes.
+
+seed.sql to populate sample admin user (admin: admin@example.com / password), sample modules (free & cube), sample pages (mix of text, code, image, video, and flags hashed), and a few gift codes.
+
+install.sh script for Ubuntu that installs required packages (PHP 8.x, extensions PDO_MYSQL, Apache2 or Nginx instructions, MySQL/MariaDB), creates DB, imports schema & seed, sets proper file permissions, and creates an Apache vhost or Nginx conf example.
+
+README.md with setup & deployment instructions, environment variables, configuration file (config.php), and how to change mail settings.
+
+Clear file structure and comments in code.
+
+Minimal unit tests or integration tests (PHP) for key flows is a plus (e.g., login, redeem code, submit flag). Not mandatory but nice.
+
+Non-functional requirements
+
+Clean, maintainable code with MVC-like separation (even in plain PHP): keep templates (views), business logic, and DB access separated.
+
+Use Composer for any external PHP packages (if used); otherwise keep to native PHP.
+
+Use Git and include .gitignore.
+
+Provide instructions to run on Ubuntu 22.04 with MySQL 8 (or MariaDB).
+
+UI/UX assets & style
+
+Provide sample CSS (dark hacker aesthetic), icons (use Font Awesome or similar), and sample images.
+
+Provide front-end components: progress bar, page list sidebar, flag-input component with hint toggle, modal for cube redemption.
+
+Testing & QA checklist (deliver)
+
+Steps to test registration/login, admin module creation, page creation, flag submission success/failure, cube purchase via gift code, unlocking a cube module, admin user management, CSRF protection test, attempted SQLi check (ensure prepared statements), file upload validation.
+
+Coding style & tone for generated code: professional, commented, secure-by-default, but with clear places that can be modified to intentionally weaken for CTF/lab use if desired. Keep UI polished and "hacker" themed. shu website qilish kerak. To'liq ma'lumotlar bilan to'lat va to'liq phpda bo'lsin. routerlar kerak emas. home, modules, register, login, cube, profile, special modules shunaqa bo'lsin yani hammasi bitta joyda admin/modules-edit, special-moduls-edit, user-edit, cube-add-gift-code va shunga oxshash bo'lishi kerak va hammasini ichida har bittasi uchun style, html, php js va boshqalarni har biriga alohida yoz va bir biriga tasir qilmasin. alohida style file kerak emas. dizayn iloji boricha yaxshila. dizayn yanayam yaxshila va to'liq phpda ber. Special moduls va admin bo'limini ham to'liq tayyorlab ber. special modul ham modulesga oxshab ishlashi kerak. admin delete edit create qila olsin. gift codelarni ham shunday qila olsin. Eng muhumi hammasini phpda ber 
