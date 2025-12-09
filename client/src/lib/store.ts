@@ -12,6 +12,8 @@ export interface Page {
     id: string;
     text: string;
     answer: string;
+    cubeReward?: number;
+    solved?: boolean;
   }[];
 }
 
@@ -25,6 +27,7 @@ export interface Module {
   progress: number; // 0-100
   pages: Page[];
   unlocked: boolean;
+  imageUrl?: string;
 }
 
 export interface User {
@@ -47,7 +50,7 @@ interface AppState {
   giftCodes: GiftCode[];
   login: (username: string, role: "user" | "admin") => void;
   logout: () => void;
-  redeemCode: (code: string) => boolean;
+  redeemCode: (code: string) => number; // Returns value redeemed, or 0 if failed
   unlockModule: (moduleId: string) => boolean;
   updateModule: (module: Module) => void;
   addModule: (module: Module) => void;
@@ -55,6 +58,7 @@ interface AppState {
   updateGiftCode: (code: GiftCode) => void;
   addGiftCode: (code: GiftCode) => void;
   deleteGiftCode: (id: string) => void;
+  solveQuestion: (moduleId: string, pageId: string, questionId: string) => number; // Returns cubes earned
 }
 
 const MOCK_PAGES_LINUX: Page[] = [
@@ -63,8 +67,9 @@ const MOCK_PAGES_LINUX: Page[] = [
     title: "Introduction to Linux",
     content: "<p>Linux is a family of open-source Unix-like operating systems based on the Linux kernel.</p>",
     type: "text",
+    image: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&q=80&w=1000",
     questions: [
-      { id: "q1", text: "Who created Linux?", answer: "Linus Torvalds" }
+      { id: "q1", text: "Who created Linux?", answer: "Linus Torvalds", cubeReward: 10, solved: false }
     ]
   },
   {
@@ -73,7 +78,7 @@ const MOCK_PAGES_LINUX: Page[] = [
     content: "<p>Everything in Linux is a file. The root directory is represented by /.</p>",
     type: "text",
     questions: [
-      { id: "q2", text: "Which directory contains configuration files?", answer: "/etc" }
+      { id: "q2", text: "Which directory contains configuration files?", answer: "/etc", cubeReward: 15, solved: false }
     ]
   }
 ];
@@ -84,8 +89,9 @@ const MOCK_PAGES_WEB: Page[] = [
     title: "Understanding HTTP",
     content: "<p>HTTP is the foundation of data communication for the World Wide Web.</p>",
     type: "text",
+    image: "https://images.unsplash.com/photo-1558494949-ef526b0042a0?auto=format&fit=crop&q=80&w=1000",
     questions: [
-      { id: "q3", text: "What port does HTTP use by default?", answer: "80" }
+      { id: "q3", text: "What port does HTTP use by default?", answer: "80", cubeReward: 10, solved: false }
     ]
   },
   {
@@ -94,7 +100,7 @@ const MOCK_PAGES_WEB: Page[] = [
     content: "<p>SQL injection is a code injection technique that might destroy your database.</p><pre>SELECT * FROM users WHERE name = '' OR '1'='1';</pre>",
     type: "code",
     questions: [
-      { id: "q4", text: "What character is often used to start an injection?", answer: "'" }
+      { id: "q4", text: "What character is often used to start an injection?", answer: "'", cubeReward: 25, solved: false }
     ]
   }
 ];
@@ -105,8 +111,9 @@ const MOCK_PAGES_ADVANCED: Page[] = [
     title: "Buffer Overflow",
     content: "<p>A buffer overflow occurs when a program writes more data to a buffer than it can hold.</p>",
     type: "text",
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=1000",
     questions: [
-      { id: "q5", text: "What memory segment stores local variables?", answer: "Stack" }
+      { id: "q5", text: "What memory segment stores local variables?", answer: "Stack", cubeReward: 50, solved: false }
     ]
   }
 ];
@@ -122,6 +129,7 @@ const INITIAL_MODULES: Module[] = [
     progress: 30,
     pages: MOCK_PAGES_LINUX,
     unlocked: true,
+    imageUrl: "https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?auto=format&fit=crop&q=80&w=600"
   },
   {
     id: "m2",
@@ -133,6 +141,7 @@ const INITIAL_MODULES: Module[] = [
     progress: 0,
     pages: MOCK_PAGES_WEB,
     unlocked: false,
+    imageUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=600"
   },
   {
     id: "m3",
@@ -144,6 +153,7 @@ const INITIAL_MODULES: Module[] = [
     progress: 0,
     pages: MOCK_PAGES_ADVANCED,
     unlocked: false,
+    imageUrl: "https://images.unsplash.com/photo-1563206767-5b1d97299337?auto=format&fit=crop&q=80&w=600"
   },
 ];
 
@@ -174,11 +184,12 @@ export const useStore = create<AppState>((set, get) => ({
     if (giftCode) {
       set((state) => ({
         user: state.user ? { ...state.user, cubes: state.user.cubes + giftCode.value } : null,
-        // In a real app, we'd mark code as used. For mockup, we leave it active or toggle mock state.
+        // Mock mark as used
+        giftCodes: state.giftCodes.map(c => c.id === giftCode.id ? { ...c, active: false } : c)
       }));
-      return true;
+      return giftCode.value;
     }
-    return false;
+    return 0;
   },
 
   unlockModule: (moduleId) => {
@@ -217,4 +228,34 @@ export const useStore = create<AppState>((set, get) => ({
   deleteGiftCode: (id) => set((state) => ({
     giftCodes: state.giftCodes.filter(c => c.id !== id)
   })),
+
+  solveQuestion: (moduleId, pageId, questionId) => {
+    const state = get();
+    const moduleIndex = state.modules.findIndex(m => m.id === moduleId);
+    if (moduleIndex === -1) return 0;
+    
+    const module = state.modules[moduleIndex];
+    const pageIndex = module.pages.findIndex(p => p.id === pageId);
+    if (pageIndex === -1) return 0;
+    
+    const page = module.pages[pageIndex];
+    const questionIndex = page.questions?.findIndex(q => q.id === questionId);
+    if (questionIndex === undefined || questionIndex === -1) return 0;
+    
+    const question = page.questions![questionIndex];
+    if (question.solved) return 0; // Already solved
+
+    const reward = question.cubeReward || 0;
+
+    // Update state to mark solved and award cubes
+    const newModules = [...state.modules];
+    newModules[moduleIndex].pages[pageIndex].questions![questionIndex].solved = true;
+
+    set((state) => ({
+       modules: newModules,
+       user: state.user ? { ...state.user, cubes: state.user.cubes + reward } : null
+    }));
+
+    return reward;
+  }
 }));

@@ -40,20 +40,37 @@ export default function ModulesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {standardModules.map((module) => (
-          <Card key={module.id} className={`bg-card/40 border-primary/10 transition-all hover:border-primary/40 ${!module.unlocked ? 'opacity-75' : ''}`}>
-            <CardContent className="p-6 h-[180px] flex flex-col">
-              <div className="flex justify-between items-start mb-4">
-                <Badge variant={module.type === 'free' ? 'secondary' : 'outline'} className={module.type === 'cube' ? 'border-secondary text-secondary' : ''}>
-                  {module.type.toUpperCase()}
-                </Badge>
-                {module.unlocked ? (
-                  <Unlock className="w-5 h-5 text-primary" />
+          <Card key={module.id} className={`bg-card/40 border-primary/10 transition-all hover:border-primary/40 group overflow-hidden ${!module.unlocked ? 'opacity-75' : ''}`}>
+            {/* Module Cover Image */}
+            <div className="h-32 bg-black/50 relative overflow-hidden">
+                {module.imageUrl ? (
+                    <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
                 ) : (
-                  <Lock className="w-5 h-5 text-muted-foreground" />
+                    <div className="w-full h-full bg-gradient-to-br from-primary/5 to-primary/20 flex items-center justify-center">
+                        <Box className="w-8 h-8 text-primary/30" />
+                    </div>
+                )}
+                <div className="absolute top-2 right-2">
+                    <Badge variant={module.type === 'free' ? 'secondary' : 'outline'} className="backdrop-blur-sm bg-background/50">
+                        {module.type.toUpperCase()}
+                    </Badge>
+                </div>
+            </div>
+
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors">{module.title}</h3>
+                {module.unlocked ? (
+                  <Unlock className="w-5 h-5 text-primary shrink-0" />
+                ) : (
+                  <Lock className="w-5 h-5 text-muted-foreground shrink-0" />
                 )}
               </div>
-              <h3 className="text-xl font-bold mb-2 line-clamp-1">{module.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-3">{module.description}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{module.description}</p>
+              
+              <div className="w-full bg-secondary/10 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-primary h-full transition-all" style={{ width: `${module.progress}%` }} />
+              </div>
             </CardContent>
             <CardFooter className="p-6 pt-0">
               {module.unlocked ? (

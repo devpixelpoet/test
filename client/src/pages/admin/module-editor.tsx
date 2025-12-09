@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Trash, Save, ArrowLeft, FileText, Code, Video, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash, Save, ArrowLeft, FileText, Code, Video, Image as ImageIcon, Box } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminModuleEditor() {
@@ -41,8 +41,7 @@ export default function AdminModuleEditor() {
       content: "<p>Enter content here...</p>",
       type: "text",
       questions: [
-        { id: `q${Date.now()}_1`, text: "Question 1", answer: "" },
-        { id: `q${Date.now()}_2`, text: "Question 2", answer: "" }
+        { id: `q${Date.now()}_1`, text: "Question 1", answer: "", cubeReward: 0, solved: false }
       ]
     };
     setModule({ ...module, pages: [...module.pages, newPage] });
@@ -95,6 +94,19 @@ export default function AdminModuleEditor() {
                 value={module.description} 
                 onChange={(e) => setModule({...module, description: e.target.value})}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Cover Image URL</Label>
+              <Input 
+                value={module.imageUrl || ""} 
+                onChange={(e) => setModule({...module, imageUrl: e.target.value})}
+                placeholder="https://..."
+              />
+               {module.imageUrl && (
+                <div className="w-full h-32 rounded overflow-hidden mt-2 bg-black/20">
+                    <img src={module.imageUrl} className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Cube Cost</Label>
@@ -185,7 +197,7 @@ export default function AdminModuleEditor() {
                         variant="ghost" 
                         className="h-6 text-xs"
                         onClick={() => {
-                          const newQuestions = [...(page.questions || []), { id: `q${Date.now()}`, text: "", answer: "" }];
+                          const newQuestions = [...(page.questions || []), { id: `q${Date.now()}`, text: "", answer: "", cubeReward: 0, solved: false }];
                           updatePage(index, { ...page, questions: newQuestions });
                         }}
                       >
@@ -194,38 +206,53 @@ export default function AdminModuleEditor() {
                     </div>
                     
                     {page.questions?.map((q, qIndex) => (
-                      <div key={q.id} className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 bg-background/50 rounded">
-                        <Input 
-                          placeholder="Question Text" 
-                          value={q.text}
-                          onChange={(e) => {
-                            const newQs = [...(page.questions || [])];
-                            newQs[qIndex].text = e.target.value;
-                            updatePage(index, { ...page, questions: newQs });
-                          }}
-                        />
-                        <div className="flex gap-2">
-                          <Input 
-                            placeholder="Answer / Flag" 
-                            className="font-mono text-green-500"
-                            value={q.answer}
-                            onChange={(e) => {
-                              const newQs = [...(page.questions || [])];
-                              newQs[qIndex].answer = e.target.value;
-                              updatePage(index, { ...page, questions: newQs });
-                            }}
-                          />
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="text-muted-foreground hover:text-red-500"
-                            onClick={() => {
-                              const newQs = page.questions?.filter((_, i) => i !== qIndex);
-                              updatePage(index, { ...page, questions: newQs });
-                            }}
-                          >
-                            <Trash className="w-3 h-3" />
-                          </Button>
+                      <div key={q.id} className="grid grid-cols-1 gap-2 p-3 bg-background/50 rounded border border-white/5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                             <Input 
+                              placeholder="Question Text" 
+                              value={q.text}
+                              onChange={(e) => {
+                                const newQs = [...(page.questions || [])];
+                                newQs[qIndex].text = e.target.value;
+                                updatePage(index, { ...page, questions: newQs });
+                              }}
+                            />
+                            <div className="flex gap-2">
+                                <Input 
+                                    placeholder="Answer / Flag" 
+                                    className="font-mono text-green-500"
+                                    value={q.answer}
+                                    onChange={(e) => {
+                                    const newQs = [...(page.questions || [])];
+                                    newQs[qIndex].answer = e.target.value;
+                                    updatePage(index, { ...page, questions: newQs });
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Reward (Cubes):</Label>
+                            <Input 
+                                type="number"
+                                className="w-24 h-8 text-xs"
+                                value={q.cubeReward || 0}
+                                onChange={(e) => {
+                                    const newQs = [...(page.questions || [])];
+                                    newQs[qIndex].cubeReward = parseInt(e.target.value);
+                                    updatePage(index, { ...page, questions: newQs });
+                                }}
+                            />
+                            <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="ml-auto text-muted-foreground hover:text-red-500 h-8"
+                                onClick={() => {
+                                const newQs = page.questions?.filter((_, i) => i !== qIndex);
+                                updatePage(index, { ...page, questions: newQs });
+                                }}
+                            >
+                                <Trash className="w-3 h-3 mr-1" /> Delete Question
+                            </Button>
                         </div>
                       </div>
                     ))}

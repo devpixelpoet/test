@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Box, Gift, Check } from "lucide-react";
+import { Box, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CubePage() {
@@ -17,11 +16,12 @@ export default function CubePage() {
     setIsRedeeming(true);
     // Simulate network delay
     setTimeout(() => {
-      const success = redeemCode(code);
-      if (success) {
+      const redeemedValue = redeemCode(code);
+      if (redeemedValue > 0) {
         toast({
           title: "Code Redeemed!",
-          description: "Cubes have been added to your inventory.",
+          description: `${redeemedValue} Cubes have been added to your inventory.`,
+          className: "border-green-500 bg-green-950/20 text-green-500",
         });
         setCode("");
       } else {
@@ -35,14 +35,12 @@ export default function CubePage() {
     }, 800);
   };
 
-  const cubePacks = [100, 200, 300, 400, 500];
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-4xl mx-auto">
        <div className="border-b border-border pb-6 flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold font-mono tracking-tight text-secondary">CUBE EXCHANGE</h2>
-          <p className="text-muted-foreground mt-2">Acquire resources to unlock advanced modules.</p>
+          <p className="text-muted-foreground mt-2">Redeem classified codes for resources.</p>
         </div>
         <div className="flex items-center gap-3 bg-secondary/10 px-6 py-3 rounded-lg border border-secondary/20">
             <Box className="w-8 h-8 text-secondary" />
@@ -53,50 +51,62 @@ export default function CubePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cubePacks.map((amount) => (
-          <Dialog key={amount}>
-            <DialogTrigger asChild>
-              <Card className="bg-card/40 border-primary/10 hover:border-secondary/50 hover:bg-secondary/5 transition-all cursor-pointer group">
-                <CardContent className="p-6 flex flex-col items-center justify-center aspect-square text-center">
-                  <Box className="w-12 h-12 text-muted-foreground mb-4 group-hover:text-secondary group-hover:scale-110 transition-all" />
-                  <h3 className="text-2xl font-bold group-hover:text-secondary">{amount}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">CUBES</p>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="border-secondary/20 bg-background/95 backdrop-blur">
-              <DialogHeader>
-                <DialogTitle className="text-secondary flex items-center gap-2">
-                    <Gift className="w-5 h-5" /> Redeem Code
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <p className="text-sm text-muted-foreground">Enter your gift code to receive {amount} Cubes.</p>
-                <div className="flex gap-2">
-                    <Input 
-                        placeholder="ENTER-CODE-HERE" 
-                        className="font-mono uppercase"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    />
-                    <Button onClick={handleRedeem} disabled={!code || isRedeeming} className="bg-secondary hover:bg-secondary/80 text-white">
-                        {isRedeeming ? "..." : "REDEEM"}
-                    </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        ))}
-      </div>
+      <Card className="bg-card/40 border-secondary/20 shadow-[0_0_30px_rgba(147,51,234,0.05)]">
+        <CardContent className="p-12 text-center space-y-8">
+            <div className="mx-auto w-24 h-24 rounded-full bg-secondary/10 flex items-center justify-center border border-secondary/20 mb-6">
+                <Gift className="w-12 h-12 text-secondary" />
+            </div>
+            
+            <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-foreground">Have a Gift Code?</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                    Enter your unique alphanumeric code below to instantly credit your account with Cubes.
+                </p>
+            </div>
+
+            <div className="flex gap-2 max-w-md mx-auto">
+                <Input 
+                    placeholder="ENTER-CODE-HERE" 
+                    className="font-mono uppercase text-lg h-12 bg-background/50 border-secondary/30 focus-visible:ring-secondary"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                />
+                <Button 
+                    onClick={handleRedeem} 
+                    disabled={!code || isRedeeming} 
+                    className="bg-secondary hover:bg-secondary/80 text-white h-12 px-8 font-bold"
+                >
+                    {isRedeeming ? "PROCESSING..." : "REDEEM"}
+                </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground pt-4">
+                * Codes are case-insensitive and can only be used once.
+            </p>
+        </CardContent>
+      </Card>
 
       <div className="bg-muted/30 p-8 rounded-lg border border-dashed border-border mt-8">
-        <h3 className="text-lg font-bold mb-4">How to get codes?</h3>
-        <ul className="list-disc list-inside space-y-2 text-muted-foreground text-sm">
-            <li>Complete CTF challenges in community events.</li>
-            <li>Participate in HackTheBox monthly tournaments.</li>
-            <li>Admin distributed rewards for bug bounties.</li>
-            <li>Try <code className="bg-background px-2 py-1 rounded border border-border">WELCOME100</code> for a starter pack.</li>
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <Box className="w-4 h-4 text-primary" /> How to obtain codes?
+        </h3>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+                <span className="text-primary">•</span> 
+                Complete weekly CTF challenges and community events.
+            </li>
+            <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Win HackTheBox tournaments and leaderboards.
+            </li>
+            <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Bug bounty rewards distributed by admins.
+            </li>
+            <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Try starter code: <code className="bg-background px-2 py-0.5 rounded border border-border mx-1 text-primary">WELCOME100</code>
+            </li>
         </ul>
       </div>
     </div>

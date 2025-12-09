@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { useStore, Page } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, CheckCircle2, Circle, ChevronRight, Lock, Flag, Terminal, Image as ImageIcon, Play, HelpCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, ChevronRight, Flag, Terminal, Image as ImageIcon, Play, HelpCircle, Box } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 export default function ModuleViewer() {
   const [match, params] = useRoute("/modules/:id");
-  const { modules, user } = useStore(); // In real app, we'd update progress here
+  const { modules, solveQuestion } = useStore(); 
   const { toast } = useToast();
   
   const module = modules.find(m => m.id === params?.id);
@@ -27,9 +27,10 @@ export default function ModuleViewer() {
   const handleFlagSubmit = (questionId: string, correctAnswer: string) => {
     const userFlag = flags[questionId];
     if (userFlag === correctAnswer) {
+      const reward = solveQuestion(module.id, activePage.id, questionId);
       toast({
         title: "Correct Flag!",
-        description: "System verified. Proceeding...",
+        description: reward > 0 ? `System verified. +${reward} Cubes awarded.` : "System verified. Proceeding...",
         className: "border-green-500 bg-green-950/20 text-green-500",
       });
     } else {
@@ -51,7 +52,7 @@ export default function ModuleViewer() {
               <ArrowLeft className="w-4 h-4 mr-2" /> Back to Modules
             </Button>
           </Link>
-          <h2 className="font-bold font-mono text-primary leading-tight">{module.title}</h2>
+          <h2 className="font-bold font-mono text-primary leading-tight line-clamp-2">{module.title}</h2>
           <div className="mt-4 space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>PROGRESS</span>
@@ -98,6 +99,13 @@ export default function ModuleViewer() {
             <div className="prose prose-invert prose-green max-w-none">
               <h1 className="font-mono border-b border-primary/20 pb-4 mb-6 text-3xl">{activePage.title}</h1>
               
+              {/* Image Support */}
+              {activePage.image && (
+                <div className="my-6 border border-border rounded-lg overflow-hidden bg-black/20 shadow-lg">
+                   <img src={activePage.image} alt="Module Content" className="w-full max-h-[400px] object-cover" />
+                </div>
+              )}
+
               {/* Dynamic Content Rendering */}
               {activePage.type === 'text' && (
                 <div dangerouslySetInnerHTML={{ __html: activePage.content }} />
@@ -107,13 +115,6 @@ export default function ModuleViewer() {
                 <div className="bg-black/50 border border-muted rounded-lg p-4 font-mono text-sm overflow-x-auto relative group">
                   <div className="absolute top-2 right-2 text-xs text-muted-foreground opacity-50 group-hover:opacity-100">BASH</div>
                   <pre>{activePage.content.replace(/<[^>]*>?/gm, '')}</pre>
-                </div>
-              )}
-              
-              {/* Image Support */}
-              {activePage.image && (
-                <div className="my-6 border border-border rounded-lg overflow-hidden bg-black/20">
-                   <img src={activePage.image} alt="Module Content" className="w-full h-auto object-cover" />
                 </div>
               )}
             </div>
@@ -127,24 +128,45 @@ export default function ModuleViewer() {
                 </h3>
                 
                 {activePage.questions.map((q) => (
-                  <Card key={q.id} className="bg-card/40 border-primary/10 overflow-hidden">
+                  <Card key={q.id} className={cn(
+                    "bg-card/40 border-primary/10 overflow-hidden transition-all",
+                    q.solved && "border-green-500/30 bg-green-500/5"
+                  )}>
                     <CardContent className="p-6">
-                      <p className="font-medium mb-4 text-foreground/90">{q.text}</p>
+                      <div className="flex justify-between mb-4">
+                        <p className="font-medium text-foreground/90">{q.text}</p>
+                        {q.cubeReward && q.cubeReward > 0 && !q.solved && (
+                            <span className="text-xs font-mono bg-secondary/20 text-secondary px-2 py-1 rounded border border-secondary/30 flex items-center gap-1 h-fit">
+                                <Box className="w-3 h-3" /> +{q.cubeReward}
+                            </span>
+                        )}
+                        {q.solved && (
+                            <span className="text-xs font-mono bg-green-500/20 text-green-500 px-2 py-1 rounded border border-green-500/30 flex items-center gap-1 h-fit">
+                                <CheckCircle2 className="w-3 h-3" /> SOLVED
+                            </span>
+                        )}
+                      </div>
+                      
                       <div className="flex gap-4">
                         <div className="relative flex-1">
                           <Flag className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                           <Input 
-                            placeholder="CTF{...}" 
-                            className="pl-10 font-mono bg-background/50 border-primary/20 focus-visible:ring-primary"
-                            value={flags[q.id] || ""}
+                            placeholder={q.solved ? "FLAG CAPTURED" : "CTF{...}"}
+                            className="pl-10 font-mono bg-background/50 border-primary/20 focus-visible:ring-primary disabled:opacity-80 disabled:cursor-not-allowed"
+                            value={q.solved ? q.answer : (flags[q.id] || "")}
                             onChange={(e) => setFlags({...flags, [q.id]: e.target.value})}
+                            disabled={q.solved}
                           />
                         </div>
                         <Button 
                           onClick={() => handleFlagSubmit(q.id, q.answer)}
-                          className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20"
+                          className={cn(
+                            "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20",
+                            q.solved && "bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20"
+                          )}
+                          disabled={q.solved}
                         >
-                          SUBMIT
+                          {q.solved ? "COMPLETED" : "SUBMIT"}
                         </Button>
                       </div>
                     </CardContent>
