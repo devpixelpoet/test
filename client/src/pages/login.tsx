@@ -1,37 +1,21 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { useStore } from "@/lib/store";
+import { Link } from "wouter";
+import { useLogin } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Terminal, Lock, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useStore();
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const loginMutation = useLogin();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username && password) {
-      // Mock login logic
-      const role = username.toLowerCase().includes("admin") ? "admin" : "user";
-      login(username, role);
-      toast({
-        title: "Access Granted",
-        description: `Welcome back, ${username}.`,
-      });
-      setLocation(role === 'admin' ? '/admin' : '/');
-    } else {
-      toast({
-        title: "Access Denied",
-        description: "Invalid credentials.",
-        variant: "destructive",
-      });
+      loginMutation.mutate({ username, password });
     }
   };
 
@@ -79,8 +63,14 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/50 font-mono">
-              <Terminal className="w-4 h-4 mr-2" /> AUTHENTICATE
+            <Button 
+              type="submit" 
+              className="w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/50 font-mono"
+              disabled={loginMutation.isPending}
+              data-testid="button-login"
+            >
+              <Terminal className="w-4 h-4 mr-2" /> 
+              {loginMutation.isPending ? "AUTHENTICATING..." : "AUTHENTICATE"}
             </Button>
           </form>
         </CardContent>
